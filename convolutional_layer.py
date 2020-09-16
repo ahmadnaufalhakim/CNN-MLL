@@ -19,16 +19,16 @@ def image_to_blue_array(image) :
   result[:, :, 1] = 0
   return result
 
-class Convolution :
+class ConvolutionalLayer :
   def __init__(self,
                input,
                input_size: tuple,
                n_filters: int,
                filter_dim: int,
-               padding: int,
-               stride: int):
+               padding: int = None,
+               stride: int = None) :
     """
-    Create an instance of convolution stage
+    Create an instance of convolution layer
 
     >>> input
     An instance of PIL.Image or a Numpy Array
@@ -50,18 +50,18 @@ class Convolution :
     """
     if Image.isImageType(input) :
       self.image = input
-      self.input = np.array(self.image)
+      self.input = np.array(self.image).astype("float")
     else :
-      self.input = input
+      self.input = input.astype("float")
 
     self.input_n_rows = input_size[0]
     self.input_n_cols = input_size[1]
     self.input_depth = self.input.shape[2]
-    self.filters = np.random.choice([-1, 0, 1], size=(filter_dim, filter_dim, self.input_depth, n_filters))
+    self.filters = np.random.choice([-1, 0, 1], size=(n_filters, filter_dim, filter_dim, self.input_depth)).astype("float")
     # self.filters = np.full((filter_dim, filter_dim, self.input_depth, n_filters), 1, self.input.dtype)
     self.biases = np.zeros(n_filters)
-    self.padding = padding
-    self.stride = stride
+    self.padding = padding if padding is not None else 0
+    self.stride = stride if stride is not None else 1
     self.feature_maps = np.zeros((int(((self.input_n_rows - filter_dim + 2 * self.padding) / self.stride) + 1),
                                   int(((self.input_n_cols - filter_dim + 2 * self.padding) / self.stride) + 1),
                                   n_filters),
@@ -153,9 +153,19 @@ class Convolution :
       for feature_map_col in range(len(self.feature_maps[feature_map_row])) :
         for feature_map_depth in range(len(self.feature_maps[feature_map_row][feature_map_col])) :
           result = 0
-          for filter_row in range(len(self.filters)) :
-            for filter_col in range(len(self.filters[filter_row])) :
-              for filter_depth in range(len(self.filters[filter_row][filter_col])) :
-                result += self.input[feature_map_row * self.stride + filter_row][feature_map_col * self.stride + filter_col][filter_depth] * self.filters[filter_row][filter_col][filter_depth][feature_map_depth]
+          for filter_row in range(self.filters.shape[1]) :
+            for filter_col in range(self.filters.shape[2]) :
+              for filter_depth in range(self.filters.shape[3]) :
+                result += self.input[feature_map_row * self.stride + filter_row][feature_map_col * self.stride + filter_col][filter_depth] * self.filters[feature_map_depth][filter_row][filter_col][filter_depth]
           result += self.biases[feature_map_depth]
-          self.feature_maps[feature_map_row][feature_map_col][feature_map_depth] = int(result)
+          self.feature_maps[feature_map_row][feature_map_col][feature_map_depth] = result
+
+  def detector(self) :
+    """
+    Apply ReLU activation function to the feature maps
+    """
+    for feature_map_row in range(len(self.feature_maps)) :
+      for feature_map_col in range(len(self.feature_maps[feature_map_row])) :
+        for feature_map_depth in range(len(self.feature_maps[feature_map_row][feature_map_col])) :
+          if self.feature_maps[feature_map_row][feature_map_col][feature_map_depth] < 0 :
+            self.feature_maps[feature_map_row][feature_map_col][feature_map_depth] = 0
