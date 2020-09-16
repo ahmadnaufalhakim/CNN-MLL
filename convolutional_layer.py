@@ -21,7 +21,7 @@ def image_to_blue_array(image) :
 
 class Convolution :
   def __init__(self,
-               image,
+               input,
                input_size: tuple,
                n_filters: int,
                filter_dim: int,
@@ -30,8 +30,8 @@ class Convolution :
     """
     Create an instance of convolution stage
 
-    >>> image
-    An instance of PIL.Image
+    >>> input
+    An instance of PIL.Image or a Numpy Array
 
     >>> input_size (row, col)
     Input size
@@ -48,37 +48,77 @@ class Convolution :
     >>> stride
     Stride size
     """
-    self.image = image
-    self.input = np.array(self.image)
+    if Image.isImageType(input) :
+      self.image = input
+      self.input = np.array(self.image)
+    else :
+      self.input = input
+
     self.input_n_rows = input_size[0]
     self.input_n_cols = input_size[1]
-    self.input_depth = np.array(image).shape[2]
+    self.input_depth = self.input.shape[2]
     self.filters = np.random.choice([-1, 0, 1], size=(filter_dim, filter_dim, self.input_depth, n_filters))
-    # self.filters = np.full((n_filters, self.input_depth, filter_dim, filter_dim), 1, self.input.dtype)
+    # self.filters = np.full((filter_dim, filter_dim, self.input_depth, n_filters), 1, self.input.dtype)
     self.biases = np.zeros(n_filters)
     self.padding = padding
     self.stride = stride
-
     self.feature_maps = np.zeros((int(((self.input_n_rows - filter_dim + 2 * self.padding) / self.stride) + 1),
                                   int(((self.input_n_cols - filter_dim + 2 * self.padding) / self.stride) + 1),
                                   n_filters),
                                   self.input.dtype)
 
-  def preprocess(self) :
+  def resize(self) :
     """
-    Resizing and cropping the image based on the input size
+    If attribute input is an instance of PIL.Image, then use method from PIL library to resize the image
     """
-    self.image.thumbnail((self.input_n_cols, self.input_n_rows))
+    if hasattr(self, "image") :
+      self.image.thumbnail((self.input_n_cols, self.input_n_rows))
+      self.input = np.array(self.image)
+    else :
+      # TODO: Resize input matrix manually and maintain visual aspect
+      pass
 
-    image_n_cols, image_n_rows = self.image.size
-    left = (image_n_cols - self.input_n_cols) / 2
-    top = (image_n_rows - self.input_n_rows) / 2
-    right = (image_n_cols + self.input_n_cols) / 2
-    bottom = (image_n_rows + self.input_n_rows) / 2
+  def crop(self) :
+    """
+    If self has an image attribute, then crop using the method from PIL library, else crop input matrix manually
+    """
+    if hasattr(self, "image") :
+      image_n_cols, image_n_rows = self.image.size
+      left = (image_n_cols - self.input_n_cols) // 2
+      top = (image_n_rows - self.input_n_rows) // 2
+      right = (image_n_cols + self.input_n_cols) // 2
+      bottom = (image_n_rows + self.input_n_rows) // 2
+      self.image = self.image.crop((left, top, right, bottom))
+      self.input = np.array(self.image)
+    else :
+      image_n_rows, image_n_cols, _ = self.input.shape
+      input_left = (image_n_cols - self.input_n_cols) // 2
+      input_top = (image_n_rows - self.input_n_rows) // 2
+      input_right = (image_n_cols + self.input_n_cols) // 2
+      input_bottom = (image_n_rows + self.input_n_rows) // 2
 
-    self.image = self.image.crop((left, top, right, bottom))
-    self.input = np.array(self.image)
-    self.input_n_rows, self.input_n_cols, self.input_depth = self.input.shape
+      rows = max((input_bottom - input_top), image_n_rows)
+      cols = max((input_right - input_left), image_n_cols)
+      res = np.zeros_like(self.input, shape=(rows, cols, self.input_depth))
+      res_left, res_top, res_right, res_bottom = input_left, input_top, input_right, input_bottom
+
+      if rows == image_n_rows :
+        res_top = 0
+        res_bottom = image_n_rows
+      elif rows == input_bottom - input_top :
+        res_top = -res_top
+        input_top = 0
+        input_bottom = rows
+      if cols == image_n_cols :
+        res_left = 0
+        res_right = image_n_cols
+      elif cols == input_right - input_left :
+        res_left = -res_left
+        input_left = 0
+        input_right = cols
+
+      res[res_top:res_bottom, res_left:res_right] = self.input
+      self.input = res[input_top:input_bottom, input_left:input_right]
 
   def pad(self) :
     """
@@ -88,30 +128,34 @@ class Convolution :
     right_input, bottom_input = self.input.shape[1] + self.padding, self.input.shape[0] + self.padding
     padded_input_rows, padded_input_cols = self.input.shape[0] + 2 * self.padding, self.input.shape[1] + 2 * self.padding
     depth = self.input_depth
-    
+
     result = np.zeros_like(self.input, shape=(padded_input_rows, padded_input_cols, depth))
     result[top_input:bottom_input, left_input:right_input] = self.input
 
-    self.image = Image.fromarray(result)
-    self.input = np.array(self.image)
-    self.input_n_rows, self.input_n_cols, self.input_depth = self.input.shape
+    if hasattr(self, "image") :
+      self.image = Image.fromarray(result)
+
+    self.input = result
+
+  def preprocess(self) :
+    """
+    Resizing, cropping, and add padding to the image based on the input size
+    """
+    self.resize()
+    self.crop()
+    self.pad()
 
   def convolution(self) :
-    # for current_filter in range(len(self.filters)) :
-    #   print('current_filter:', current_filter)
-    #   result = 0
-    #   for feature_map_row in range(len(self.feature_maps)) :
-    #     print('  feature_map_row:', feature_map_row)
-    #     for feature_map_col in range(len(self.feature_maps[feature_map_row])) :
-    #       print('    feature_map_col:', feature_map_col)
-    #       for depth in range(self.input_depth) :
-    #         print('      depth:', depth)
-    #         for filter_row in range(0, len(self.filters[current_filter][depth])) :
-    #           print('        filter_row:', filter_row)
-    #           for filter_col in range(0, len(self.filters[current_filter][depth])) :
-    #             print('          filter_col:', filter_col)
-    #             result += self.input[feature_map_row * self.stride + filter_row][feature_map_col * self.stride + filter_col][depth] * self.filters[current_filter][depth][filter_row][filter_col]
-    #             # print(self.input[feature_map_row * self.stride + filter_row][feature_map_col * self.stride + filter_col][depth], self.filters[current_filter][depth][filter_row][filter_col])
-    #       result += self.biases[current_filter]
-    #       self.feature_maps[feature_map_row][feature_map_col][current_filter] = int(result)
-    pass
+    """
+    Convolute input matrix with filters/kernels
+    """
+    for feature_map_row in range(len(self.feature_maps)) :
+      for feature_map_col in range(len(self.feature_maps[feature_map_row])) :
+        for feature_map_depth in range(len(self.feature_maps[feature_map_row][feature_map_col])) :
+          result = 0
+          for filter_row in range(len(self.filters)) :
+            for filter_col in range(len(self.filters[filter_row])) :
+              for filter_depth in range(len(self.filters[filter_row][filter_col])) :
+                result += self.input[feature_map_row * self.stride + filter_row][feature_map_col * self.stride + filter_col][filter_depth] * self.filters[filter_row][filter_col][filter_depth][feature_map_depth]
+          result += self.biases[feature_map_depth]
+          self.feature_maps[feature_map_row][feature_map_col][feature_map_depth] = int(result)

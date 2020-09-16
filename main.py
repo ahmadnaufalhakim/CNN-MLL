@@ -4,45 +4,46 @@ import convolutional_layer as cl
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import time
+import cv2
+
+def resize_col(array) :
+  pass
 
 np.random.seed(0)
 
 # conv2d = convolutional_layer.ConvolutionLayer()
 
 image = Image.open("./data/train/cats/cat.12.jpg")
+array = np.array(image)
 
-conv2d = cl.Convolution(image, (25, 25), 3, 3, 5, 2)
-print(conv2d.input.dtype)
+# conv2d_img = cl.Convolution(image, (300, 300), 3, 3, 5, 2)
+# conv2d_arr = cl.Convolution(array, (300, 300), 3, 3, 5, 2)
+dummy_array = np.array([[[85, 170, 255], [170, 255, 85], [255, 85, 170]],
+                        [[170, 255, 85], [255, 85, 170], [85, 170, 255]],
+                        [[255, 85, 170], [85, 170, 255], [170, 255, 85]]])
+conv2d = cl.Convolution(dummy_array, (2, 2), 3, 2, 1, 1)
 conv2d.preprocess()
-conv2d.pad()
-conv2d.image.save("conv2d.jpg")
-# conv2d.image.save("test_padding.jpg")
-print(conv2d.filters)
-res = 0
-for i in range(3) :
-  for j in range(3) :
-    res += conv2d.input[i+6][j+4][0]
-    res += conv2d.input[i+6][j+4][1]
-    res += conv2d.input[i+6][j+4][2]
-    
-print(res)
-print(conv2d.input.dtype)
-
-np.random.seed(0)
-time1 = time.time()
+print(conv2d.input)
+print(conv2d.input.shape)
 conv2d.convolution()
-time2 = time.time()
-print(time2-time1, 'seconds')
-
-arr = np.random.choice([i for i in range(128, 256)], (200, 200, 6))
-print('conv2d.feature_maps:')
-print(conv2d.feature_maps.dtype)
-print(conv2d.feature_maps.shape)
+print(conv2d.input)
+print(conv2d.input.shape)
 print(conv2d.feature_maps)
-img = Image.fromarray(conv2d.feature_maps)
-# print(arr)
-# print(np.array(img))
-# plt.imshow(arr)
-# plt.show()
-# img = Image.fromarray(arr)
-img.save("conv.jpg")
+print(conv2d.feature_maps.shape)
+# print(conv2d_img.input.shape)
+# print(conv2d_arr.input.shape)
+
+# conv2d_img.resize()
+# conv2d_arr.resize()
+# conv2d_img.crop()
+# conv2d_arr.crop()
+# conv2d_img.preprocess()
+# conv2d_arr.preprocess()
+
+
+# print(conv2d_img.input.shape)
+# print(conv2d_arr.input.shape)
+
+# conv2d_img.image.save("conv2d_img.jpg")
+# Image.fromarray(conv2d_arr.input).save("conv2d_arr.jpg")
+# Image.fromarray(conv2d.feature_maps, 'RGB').save("dummy.jpg")
