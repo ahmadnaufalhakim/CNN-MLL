@@ -57,8 +57,8 @@ class ConvolutionalLayer :
     self.input_n_rows = input_size[0]
     self.input_n_cols = input_size[1]
     self.input_depth = self.input.shape[2]
-    self.filters = np.random.choice([-1, 0, 1], size=(n_filters, filter_dim, filter_dim, self.input_depth)).astype("float")
-    # self.filters = np.full((filter_dim, filter_dim, self.input_depth, n_filters), 1, self.input.dtype)
+    self.filters = np.random.uniform(low=0, high=0.05, size=(n_filters, filter_dim, filter_dim, self.input_depth)).astype("float")
+    # self.filters = np.full((filter_dim, filter_dim, self.input_depth, n_filters), .05, self.input.dtype)
     self.biases = np.zeros(n_filters)
     self.padding = padding if padding is not None else 0
     self.stride = stride if stride is not None else 1
