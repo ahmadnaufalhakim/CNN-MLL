@@ -1,5 +1,5 @@
 from PIL import Image
-from layer import Layer
+# from layer import Layer
 import numpy as np
 
 def image_to_red_array(image) :
@@ -63,7 +63,7 @@ class Convolutional :
     self.input_n_rows = input_size[0]
     self.input_n_cols = input_size[1]
     self.input_depth = self.input.shape[2]
-    # self.filters = np.random.uniform(low=0, high=0.05, size=(n_filters, filter_dim, filter_dim, self.input_depth)).astype("float")
+    self.filters = np.random.uniform(low=0, high=0.05, size=(n_filters, filter_dim, filter_dim, self.input_depth)).astype("float")
     self.filters = np.full((n_filters, filter_dim, filter_dim, self.input_depth), .05, self.input.dtype)
     self.biases = np.zeros(n_filters)
     self.padding = padding if padding is not None else 0

@@ -2,6 +2,8 @@ from PIL import Image
 import numpy as np
 import convolutional as conv
 import pooling as pool
+import flatten as flat
+import dense as ds
 
 np.random.seed(0)
 
@@ -61,6 +63,16 @@ pool2d.pooling()
 print('pool2d.feature_maps:')
 print(pool2d.feature_maps)
 print('pool2d.feature_maps.shape:', pool2d.feature_maps.shape)
+fl = flat.Flatten(pool2d.feature_maps)
+print(fl.output)
+d = ds.Dense(fl.output, 15, activation="relu")
+print(d.weights.shape)
+print(d.weights)
+d.forward()
+print(d.output)
+d2 = ds.Dense(d.output, 1, activation="sigmoid")
+d2.forward()
+print(d2.output)
 
 # Image.fromarray(conv2d_img.feature_maps, 'RGB').save("conv2d_img.jpg")
 # Image.fromarray(conv2d_arr.feature_maps, 'RGB').save("conv2d_arr.jpg")
