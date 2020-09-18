@@ -1,4 +1,5 @@
 from PIL import Image
+from layer import Layer
 import numpy as np
 
 def image_to_red_array(image) :
@@ -19,7 +20,7 @@ def image_to_blue_array(image) :
   result[:, :, 1] = 0
   return result
 
-class ConvolutionalLayer :
+class Convolutional :
   def __init__(self,
                input,
                input_size: tuple,
@@ -48,6 +49,11 @@ class ConvolutionalLayer :
     >>> stride
     Stride size
     """
+    # super(Convolutional, self).__init__(
+    #   category='conv',
+    #   weights=np.random.uniform(low=0, high=0.05, size=(n_filters, filter_dim, filter_dim, self.input_depth)).astype("float"),
+    #   biases=np.zeros(n_filters),
+    # )
     if Image.isImageType(input) :
       self.image = input
       self.input = np.array(self.image).astype("float")
@@ -57,14 +63,14 @@ class ConvolutionalLayer :
     self.input_n_rows = input_size[0]
     self.input_n_cols = input_size[1]
     self.input_depth = self.input.shape[2]
-    self.filters = np.random.uniform(low=0, high=0.05, size=(n_filters, filter_dim, filter_dim, self.input_depth)).astype("float")
-    # self.filters = np.full((filter_dim, filter_dim, self.input_depth, n_filters), .05, self.input.dtype)
+    # self.filters = np.random.uniform(low=0, high=0.05, size=(n_filters, filter_dim, filter_dim, self.input_depth)).astype("float")
+    self.filters = np.full((n_filters, filter_dim, filter_dim, self.input_depth), .05, self.input.dtype)
     self.biases = np.zeros(n_filters)
     self.padding = padding if padding is not None else 0
     self.stride = stride if stride is not None else 1
-    self.feature_maps = np.zeros((int(((self.input_n_rows - filter_dim + 2 * self.padding) / self.stride) + 1),
-                                  int(((self.input_n_cols - filter_dim + 2 * self.padding) / self.stride) + 1),
-                                  n_filters),
+    self.feature_maps = np.zeros((n_filters,
+                                  int(((self.input_n_rows - filter_dim + 2 * self.padding) / self.stride) + 1),
+                                  int(((self.input_n_cols - filter_dim + 2 * self.padding) / self.stride) + 1)),
                                   self.input.dtype)
 
   def resize(self) :
@@ -149,23 +155,23 @@ class ConvolutionalLayer :
     """
     Convolute input matrix with filters/kernels
     """
-    for feature_map_row in range(len(self.feature_maps)) :
-      for feature_map_col in range(len(self.feature_maps[feature_map_row])) :
-        for feature_map_depth in range(len(self.feature_maps[feature_map_row][feature_map_col])) :
+    for feature_map_row in range(self.feature_maps.shape[1]) :
+      for feature_map_col in range(self.feature_maps.shape[2]) :
+        for feature_map_depth in range(self.feature_maps.shape[0]) :
           result = 0
           for filter_row in range(self.filters.shape[1]) :
             for filter_col in range(self.filters.shape[2]) :
               for filter_depth in range(self.filters.shape[3]) :
                 result += self.input[feature_map_row * self.stride + filter_row][feature_map_col * self.stride + filter_col][filter_depth] * self.filters[feature_map_depth][filter_row][filter_col][filter_depth]
           result += self.biases[feature_map_depth]
-          self.feature_maps[feature_map_row][feature_map_col][feature_map_depth] = result
+          self.feature_maps[feature_map_depth][feature_map_row][feature_map_col] = result
 
   def detector(self) :
     """
     Apply ReLU activation function to the feature maps
     """
-    for feature_map_row in range(len(self.feature_maps)) :
-      for feature_map_col in range(len(self.feature_maps[feature_map_row])) :
-        for feature_map_depth in range(len(self.feature_maps[feature_map_row][feature_map_col])) :
-          if self.feature_maps[feature_map_row][feature_map_col][feature_map_depth] < 0 :
-            self.feature_maps[feature_map_row][feature_map_col][feature_map_depth] = 0
+    for feature_map_row in range(self.feature_maps.shape[1]) :
+      for feature_map_col in range(self.feature_maps.shape[2]) :
+        for feature_map_depth in range(self.feature_maps.shape[0]) :
+          if self.feature_maps[feature_map_depth][feature_map_row][feature_map_col] < 0 :
+            self.feature_maps[feature_map_depth][feature_map_row][feature_map_col] = 0
