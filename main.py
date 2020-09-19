@@ -9,10 +9,21 @@ import time
 
 np.random.seed(0)
 
+# print(np.prod(np.zeros((1,2,3,4)).shape))
+
 model = seq.SequentialModel([
-  conv.Convolutional(2, 3, (10, 10, 3), stride=1),
+  conv.Convolutional(96, (11, 11), (227, 227, 3), 0, 4),
+  pool.Pooling((3, 3), 2, 'max'),
+  conv.Convolutional(256, (5, 5), padding=2),
+  pool.Pooling((3, 3), 2, 'max'),
+  conv.Convolutional(384, (3, 3), padding=1),
+  conv.Convolutional(384, (3, 3), padding=1),
+  conv.Convolutional(256, (3, 3), padding=1),
+  pool.Pooling((3, 3), 2, 'max'),
   flat.Flatten(),
-  ds.Dense(1, 'relu')
+  ds.Dense(4096, 'relu'),
+  ds.Dense(4096, 'relu'),
+  ds.Dense(1000, 'sigmoid')
 ])
 
 image = Image.open("./data/test/cats/cat.9.jpg")
@@ -31,8 +42,9 @@ dummy_array = np.array([[[85, 170, 255],
                         [[1, 2, 3],
                          [4, 5, 6],
                          [7, 8, 9]]])
-
-print(model.forward(image))
+# model.forward(image)
+# print(model.forward(image))
+print(model.output_shapes)
 # print(model)
 
 

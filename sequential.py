@@ -1,6 +1,12 @@
 import numpy as np
 
 class SequentialModel:
+  """
+  Create a basic model instance
+
+  >>> layers
+  An array of layers
+  """
   def __init__(self, layers):
     self.layers = []
     self.output_shapes = []
@@ -10,17 +16,15 @@ class SequentialModel:
       self.add(layer)
 
   def add(self, layer):
-    # init_weights = getattr(layer, 'init_weights', None)
-
     if len(self.layers) :
-      # if callable(init_weights):
       if layer.name in self.weighted_layers:
         layer.init_weights(self.output_shapes[-1])
+      self.output_shapes.append(layer.output_shape(self.output_shapes[-1]))
     else :
       if layer.name in self.weighted_layers:
         layer.init_weights(layer.input_shape)
-    
-    self.output_shapes.append(layer.output_shape())
+      self.output_shapes.append(layer.output_shape())
+
     self.layers.append(layer)
 
   def forward(self, input: np.array):

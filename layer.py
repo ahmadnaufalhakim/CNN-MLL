@@ -1,6 +1,9 @@
 import numpy as np
 
 class Layer :
+  """
+  Base layer class
+  """
   def __init__(self,
                name = None,
                weights = None,
@@ -11,19 +14,3 @@ class Layer :
 
   def forward(self, input) -> np.array:
     pass
-
-# class Convolution(Layer):
-#   def forward(self, input):
-#     print("forward")
-
-# class Pooling(Layer):
-#   def forward(self, input):
-#     print("forward")
-
-# class Flatten(Layer):
-#   def forward(self, input):
-#     print("forward")
-    
-# class Dense(Layer):
-#   def forward(self, input):
-#     print("forward")

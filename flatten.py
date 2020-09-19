@@ -4,9 +4,6 @@ from layer import Layer
 class Flatten(Layer) :
   """
   Flatten stage operation for 2D spatial data
-
-  >>> input
-  An instance of Numpy Array
   """
   def __init__(self) :
     super().__init__(
@@ -18,9 +15,9 @@ class Flatten(Layer) :
 
   def forward(self, input) :
     self.output = input.flatten()
-    # self.output_shape = len(self.output)
     return self.output
 
-  def output_shape(self) :
+  def output_shape(self, input_shape) :
+    self.output = np.zeros(np.prod(input_shape))
     print('flatten output_shape:', self.output.shape)
     return self.output.shape
