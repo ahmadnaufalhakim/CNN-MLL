@@ -1,6 +1,7 @@
 import numpy as np
+from layer import Layer
 
-class Pooling:
+class Pooling(Layer):
   """
   Pooling stage operation for 2D spatial data
 
@@ -21,6 +22,9 @@ class Pooling:
                filter_dim: int = None,
                stride: int = None,
                mode: str = None) :
+    super().__init__(
+      name='pool',
+    )
     self.input = input
     self.filter_dim = filter_dim if filter_dim is not None else 2
     self.stride = stride if stride is not None else 2
@@ -54,3 +58,7 @@ class Pooling:
             self.feature_maps[feature_map_depth][feature_map_row][feature_map_col] = np.mean(self.input[feature_map_depth, top_row:bottom_row, left_col:right_col])
     else :
       pass
+
+  def output_shape(self) :
+    print('pooling output_shape:', self.feature_maps.shape)
+    return self.feature_maps.shape
