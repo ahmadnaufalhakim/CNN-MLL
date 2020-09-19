@@ -7,7 +7,7 @@ class SequentialModel:
   >>> layers
   An array of layers
   """
-  def __init__(self, layers):
+  def __init__(self, layers: list):
     self.layers = []
     self.output_shapes = []
     self.weighted_layers = ['conv', 'dense']

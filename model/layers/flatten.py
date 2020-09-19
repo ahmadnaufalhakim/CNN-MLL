@@ -1,5 +1,5 @@
 import numpy as np
-from layer import Layer
+from .layer import Layer
 
 class Flatten(Layer) :
   """
@@ -13,11 +13,13 @@ class Flatten(Layer) :
     )
     self.output = np.zeros(0)
 
-  def forward(self, input) :
-    self.output = input.flatten()
-    return self.output
-
   def output_shape(self, input_shape) :
     self.output = np.zeros(np.prod(input_shape))
-    print('flatten output_shape:', self.output.shape)
     return self.output.shape
+
+  def forward(self, input) :
+    """
+    Flatten layer forward propagation
+    """
+    self.output = input.flatten()
+    return self.output

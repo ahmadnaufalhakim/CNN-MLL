@@ -1,5 +1,5 @@
 from PIL import Image
-from layer import Layer
+from .layer import Layer
 import numpy as np
 
 class Convolutional(Layer) :
@@ -29,6 +29,7 @@ class Convolutional(Layer) :
     """
     super().__init__(
       name='conv',
+      weights=np.random.uniform(low=0, high=1, size=(n_filters, filter_dim[0], filter_dim[1], input_shape[2])).astype("float") if input_shape is not None else None,
       biases=np.zeros(n_filters),
     )
     self.input = None
@@ -44,17 +45,16 @@ class Convolutional(Layer) :
 
   def init_weights(self, input_shape) :
     if self.input_depth :
-      self.weights = np.random.uniform(low=0, high=0.05, size=(self.n_filters, self.filter_dim[0], self.filter_dim[1], self.input_depth)).astype("float")
+      self.weights = np.random.uniform(low=0, high=1, size=(self.n_filters, self.filter_dim[0], self.filter_dim[1], self.input_depth)).astype("float")
     else :
       self.input_depth = input_shape[0]
-      self.weights = np.random.uniform(low=0, high=0.05, size=(self.n_filters, self.filter_dim[0], self.filter_dim[1], input_shape[0])).astype("float")
+      self.weights = np.random.uniform(low=0, high=1, size=(self.n_filters, self.filter_dim[0], self.filter_dim[1], input_shape[0])).astype("float")
       self.feature_maps = np.zeros((self.n_filters,
                                     int(((input_shape[1] - self.filter_dim[0] + 2 * self.padding) / self.stride) + 1),
                                     int(((input_shape[2] - self.filter_dim[1] + 2 * self.padding) / self.stride) + 1)))
 
   def output_shape(self,
                    input_shape: tuple = None) :
-    print('convolutional output_shape:', self.feature_maps.shape)
     return self.feature_maps.shape
 
   def resize(self, input) :
@@ -175,6 +175,9 @@ class Convolutional(Layer) :
             self.feature_maps[feature_map_depth][feature_map_row][feature_map_col] = 0
 
   def forward(self, input):
+    """
+    Convolution layer forward propagation
+    """
     self.preprocess(input)
     self.convolution()
     self.detector()

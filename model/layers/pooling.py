@@ -1,5 +1,5 @@
 import numpy as np
-from layer import Layer
+from .layer import Layer
 
 class Pooling(Layer):
   """
@@ -20,6 +20,8 @@ class Pooling(Layer):
                mode: str = None) :
     super().__init__(
       name='pool',
+      weights=None,
+      biases=None
     )
     self.input = None
     self.filter_dim = filter_dim if filter_dim is not None else 2
@@ -32,11 +34,11 @@ class Pooling(Layer):
     self.feature_maps = np.zeros((input_shape[0],
                                   int(((input_shape[1] - self.filter_dim[0]) / self.stride) + 1),
                                   int(((input_shape[2] - self.filter_dim[1]) / self.stride) + 1)))
-    print('pooling output_shape:', self.feature_maps.shape)
     return self.feature_maps.shape
 
   def forward(self, input) :
     """
+    Pooling layer forward propagation
     Reduce spatial size of output from convolution stage to handle overfitting, based on the pooling mode
     """
     self.input = input

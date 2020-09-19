@@ -13,4 +13,7 @@ class Layer :
     self.biases = biases if biases is not None else None
 
   def forward(self, input) -> np.array:
+    """
+    Forward propagation
+    """
     pass
