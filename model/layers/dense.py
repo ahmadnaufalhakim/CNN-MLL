@@ -1,6 +1,18 @@
 import numpy as np
 from .layer import Layer
 
+np.seterr(all='ignore')
+
+def relu(input) :
+  for i in range(len(input)) :
+    input[i] = 0 if input[i] < 0 else input[i]
+  return input
+
+def sigmoid(input) :
+  for i in range(len(input)) :
+    input[i] = 1 / (1 + np.exp(-input[i]))
+  return input
+
 class Dense(Layer) :
   """
   Flatten stage operation for 2D spatial data
@@ -18,7 +30,7 @@ class Dense(Layer) :
     super().__init__(
       name='dense',
       weights= np.zeros(0),
-      biases=np.zeros(1)
+      biases=0
     )
     self.input_shape = input_shape if not None else None
     self.activation = activation if activation is not None else 'sigmoid'
@@ -27,19 +39,13 @@ class Dense(Layer) :
 
   def init_weights(self, input):
     if self.input_shape :
-      self.weights = np.random.uniform(low=0, high=1, size=(int(self.n_node), self.input_shape)).astype("float")
+      self.weights = np.random.uniform(low=-.5, high=.5, size=(int(self.n_node), self.input_shape)).astype("float")
     else :
-      self.weights = np.random.uniform(low=0, high=1, size=(int(self.n_node), len(input))).astype("float")
+      self.weights = np.random.uniform(low=-.5, high=.5, size=(int(self.n_node), input[0])).astype("float")
 
   def output_shape(self,
                    input_shape: tuple = None) :
     return self.output.shape
-
-  def relu(self, x: float):
-    return 0 if x < 0 else x
-
-  def sigmoid(self, x: float):
-    return (1 / (1 + np.exp(-x)))
 
   def backward(self):
     pass
@@ -48,13 +54,12 @@ class Dense(Layer) :
     """
     Dense layer forward propagation
     """
-    for i in range(self.weights.shape[0]):
-      sum = 0
-      for j in range(self.weights.shape[1]):
-        sum = sum + (input[j] * self.weights[i][j])
-      sum = sum + self.biases[0]
-      if (self.activation == "relu"):
-        self.output[i] = self.relu(sum)
-      elif (self.activation == "sigmoid"):
-        self.output[i] = self.sigmoid(sum)
+    temp_output = np.dot(self.weights, input)
+    if (np.dot(self.weights, input).shape[0] == 1) :
+      print(temp_output + self.biases)
+
+    if (self.activation == "relu"):
+      self.output = relu(temp_output + self.biases)
+    elif (self.activation == "sigmoid"):
+      self.output = sigmoid(temp_output + self.biases)
     return self.output
