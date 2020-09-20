@@ -1,8 +1,7 @@
-from PIL import Image
 import numpy as np
-from glob import glob
 import time
-# import tensorflow as tf
+import tensorflow as tf
+from sklearn.metrics import accuracy_score
 
 from model.sequential import SequentialModel
 from model.layers.layer import Layer
@@ -11,65 +10,76 @@ from model.layers.dense import Dense
 from model.layers.flatten import Flatten
 from model.layers.pooling import Pooling
 
-np.random.seed(0)
+np.random.seed(13517)
 
-# IMG_DIR_TEST = './data/test'
-# IMAGE_SIZE = (150, 150)
+def load_images_as_dataset(directory, image_size, batch_size, rescale=True) :
+  test_dataset = tf.keras.preprocessing.image_dataset_from_directory(
+    directory,
+    labels='inferred',
+    label_mode='int',
+    class_names=['dogs', 'cats'],
+    batch_size=batch_size,
+    image_size=image_size
+  )
+  rescale_factor = 1.0/255 if rescale else 1
 
-# test = tf.keras.preprocessing.image_dataset_from_directory(
-#   IMG_DIR_TEST,
-#   image_size=IMAGE_SIZE
-# )
+  list_images = []
+  list_labels = []
+  for images, labels in test_dataset.take(1) :
+    for i in range(len(images)) :
+      list_images.append(images[i].numpy().transpose(2, 0, 1) * rescale_factor)
+      list_labels.append(labels[i].numpy())
+  return list_images, list_labels
 
-model1 = SequentialModel([
-  Convolutional(4, (3, 3), (150, 150, 3), 0, 1),
-  Pooling((2, 2), 2),
-  Convolutional(8, (3, 3)),
-  Pooling((2, 2), 2),
-  Flatten(),
-  Dense(256, 'relu'),
-  Dense(1, 'sigmoid')
-])
+def predict_class(output) :
+  return 0 if output < 0.5 else 1
 
-# model2 = SequentialModel([
-#   Convolutional(4, (3, 3), (150, 150, 3), 0, 1),
-#   Pooling((2, 2), 2),
-#   Convolutional(8, (3, 3)),
-#   Pooling((2, 2), 2),
-#   Flatten(),
-#   Dense(256, 'relu'),
-#   Dense(1, 'relu')
-# ])
+if __name__ == "__main__":
+  IMG_DIR_TEST = './data/test'
+  IMAGE_SIZE = (150, 150)
+  BATCH_SIZE = 40
 
-images = glob('./data/test/cats/*.jpg')
-images.extend(glob('./data/test/dogs/*.jpg'))
+  # Prepare dataset
+  list_images, list_labels = load_images_as_dataset(IMG_DIR_TEST, IMAGE_SIZE, BATCH_SIZE)
 
-# dummy_array = np.array([[[85, 170, 255],
-#                          [170, 255, 85],
-#                          [255, 85, 170]],
-                        
-#                         [[170, 255, 85],
-#                          [255, 85, 170],
-#                          [85, 170, 255]],
-                         
-#                         [[255, 85, 170],
-#                          [85, 170, 255],
-#                          [170, 255, 85]],
-                         
-#                         [[1, 2, 3],
-#                          [4, 5, 6],
-#                          [7, 8, 9]]])
+  # Define models
+  model1 = SequentialModel([
+    Convolutional(4, (3, 3), (150, 150, 3), 0, 1),
+    Pooling((2, 2), 2),
+    Convolutional(8, (3, 3)),
+    Pooling((2, 2), 2),
+    Flatten(),
+    Dense(256, 'relu'),
+    Dense(1, 'sigmoid')
+  ])
 
-for img in images :
-  print('\nfilename:', img)
-  arr = np.array(Image.open(img)).transpose(2, 0, 1) * (1.0/255)
+  # model2 = SequentialModel([
+  #   Convolutional(16, (3, 3), (150, 150, 3)),
+  #   Pooling((2, 2), 2),
+  #   Convolutional(32, (3, 3)),
+  #   Pooling((2, 2), 2),
+  #   Convolutional(64, (3, 3)),
+  #   Pooling((2, 2), 2),
+  #   Flatten(),
+  #   Dense(512, 'relu'),
+  #   Dense(1, 'sigmoid')
+  # ])
 
-  start1 = time.time()
-  print('model1:', model1.forward(Image.open(img)))
-  finish1 = time.time()
-  print('model1 finished in:', finish1-start1)
-  
-  # start2 = time.time()
-  # print('model2:', model2.forward(Image.open(img)))
-  # finish2 = time.time()
-  # print('model2 finished in:', finish2-start2)
+  # List of predicted labels by model
+  list_predicted = []
+
+  # Predict using defined models
+  print('\n================')
+  print('Predict')
+  print('================')
+  for idx, img in enumerate(list_images) :
+    start1 = time.time()
+    raw_output = model1.forward(img)
+    finish1 = time.time()
+    print('Model 1 prediction:', predict_class(raw_output), end='\t| ')
+    print('Correct label:', list_labels[idx], end='\t| ')
+    print('Raw output:', raw_output)
+    print('Model 1 finished in:', finish1-start1, 'seconds', end='\n\n')
+    list_predicted.append(predict_class(raw_output))
+
+  print('Model 1 accuracy:', accuracy_score(list_labels, list_predicted))
