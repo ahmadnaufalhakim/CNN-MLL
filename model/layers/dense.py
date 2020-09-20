@@ -3,16 +3,6 @@ from .layer import Layer
 
 np.seterr(all='ignore')
 
-def relu(input) :
-  for i in range(len(input)) :
-    input[i] = 0 if input[i] < 0 else input[i]
-  return input
-
-def sigmoid(input) :
-  for i in range(len(input)) :
-    input[i] = 1 / (1 + np.exp(-input[i]))
-  return input
-
 class Dense(Layer) :
   """
   Flatten stage operation for 2D spatial data
@@ -47,6 +37,22 @@ class Dense(Layer) :
                    input_shape: tuple = None) :
     return self.output.shape
 
+  def relu(self, input: np.array) :
+    """
+    Apply ReLU function
+    """
+    for i in range(len(input)) :
+      input[i] = 0 if input[i] < 0 else input[i]
+    return input
+
+  def sigmoid(self, input: np.array) :
+    """
+    Apply sigmoid function
+    """
+    for i in range(len(input)) :
+      input[i] = 1 / (1 + np.exp(-input[i]))
+    return input
+
   def backward(self):
     pass
 
@@ -58,7 +64,7 @@ class Dense(Layer) :
     # if (np.dot(self.weights, input).shape[0] == 1) :
     #   print(temp_output + self.biases)
     if (self.activation == "relu"):
-      self.output = relu(temp_output + self.biases)
+      self.output = self.relu(temp_output + self.biases)
     elif (self.activation == "sigmoid"):
-      self.output = sigmoid(temp_output + self.biases)
+      self.output = self.sigmoid(temp_output + self.biases)
     return self.output
