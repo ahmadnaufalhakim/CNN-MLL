@@ -55,9 +55,8 @@ class Dense(Layer) :
     Dense layer forward propagation
     """
     temp_output = np.dot(self.weights, input)
-    if (np.dot(self.weights, input).shape[0] == 1) :
-      print(temp_output + self.biases)
-
+    # if (np.dot(self.weights, input).shape[0] == 1) :
+    #   print(temp_output + self.biases)
     if (self.activation == "relu"):
       self.output = relu(temp_output + self.biases)
     elif (self.activation == "sigmoid"):
