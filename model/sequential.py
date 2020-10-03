@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import sys
 import time
@@ -97,3 +98,44 @@ class SequentialModel:
       raise Exception('Invalid layer type: ' + self.layers[-1].name)
 
     return predicted_labels
+
+  def save_model_as_json(self, filename: str) :
+    def default(object) :
+      """
+      Convert Numpy array to list
+      """
+      if isinstance(object, np.ndarray) :
+        return object.tolist()
+
+    model = {'layers': []}
+    for layer in self.layers :
+      layer_data = {}
+      layer_data['name'] = layer.name
+
+      if layer_data['name'] == 'conv' :
+        layer_data['n_filters'] = layer.n_filters
+        layer_data['filter_dim'] = layer.filter_dim
+        layer_data['input_shape'] = layer.input_shape
+        layer_data['padding'] = layer.padding
+        layer_data['stride'] = layer.stride
+        layer_data['weights'] = layer.weights
+        layer_data['biases'] = layer.biases
+
+      elif layer_data['name'] == 'dense' :
+        layer_data['n_node'] = layer.n_node
+        layer_data['activation'] = layer.activation
+        layer_data['weights'] = layer.weights
+        layer_data['biases'] = layer.biases
+
+      elif layer_data['name'] == 'pool' :
+        layer_data['filter_dim'] = layer.filter_dim
+        layer_data['stride'] = layer.stride
+        layer_data['mode'] = layer.mode
+
+      model['layers'].append(layer_data)
+
+    with open(filename, 'w') as output_file:
+      json.dump(model, output_file, indent=4, default=default)
+
+  # def load_model_from_json(self) :
+  #   pass

@@ -72,3 +72,6 @@ if __name__ == "__main__":
   list_predicted = model1.predict(list_images, list_labels, True)
 
   print('Model accuracy:', accuracy_score(list_labels, list_predicted))
+
+  # Save model
+  model1.save_model_as_json('testing.json')
