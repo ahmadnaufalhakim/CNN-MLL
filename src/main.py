@@ -62,6 +62,9 @@ if __name__ == "__main__":
   #   Dense(1, 'sigmoid')
   # ])
 
+  # Load model
+  # model1.load_model_from_json('testing.json')
+
   # List of predicted labels by model
   list_predicted = []
 
