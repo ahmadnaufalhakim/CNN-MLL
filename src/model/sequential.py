@@ -1,5 +1,6 @@
 import json
 import numpy as np
+import os
 import sys
 import time
 
@@ -134,7 +135,10 @@ class SequentialModel:
 
       model['layers'].append(layer_data)
 
-    with open(filename, 'w') as output_file:
+    if not os.path.exists('../model') :
+      os.mkdir('../model')
+
+    with open(os.path.join('../model/', filename), 'w') as output_file:
       json.dump(model, output_file, indent=4, default=default)
 
   # def load_model_from_json(self) :
