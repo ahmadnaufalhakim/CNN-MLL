@@ -19,8 +19,8 @@ class Dense(Layer) :
                input_shape: int = None) :
     super().__init__(
       name='dense',
-      weights= np.zeros(0),
-      biases=0
+      weights=np.zeros(0),
+      biases=np.zeros(n_node)
     )
     self.input_shape = input_shape if not None else None
     self.activation = activation if activation is not None else 'sigmoid'
@@ -37,20 +37,18 @@ class Dense(Layer) :
                    input_shape: tuple = None) :
     return self.output.shape
 
-  def relu(self, input: np.array) :
+  def relu(self, input) :
     """
     Apply ReLU function
     """
-    for i in range(len(input)) :
-      input[i] = 0 if input[i] < 0 else input[i]
+    input = 0 if input < 0 else input
     return input
 
-  def sigmoid(self, input: np.array) :
+  def sigmoid(self, input) :
     """
     Apply sigmoid function
     """
-    for i in range(len(input)) :
-      input[i] = 1 / (1 + np.exp(-input[i]))
+    input = 1 / (1 + np.exp(-input))
     return input
 
   def backward(self):
@@ -64,7 +62,9 @@ class Dense(Layer) :
     # if (np.dot(self.weights, input).shape[0] == 1) :
     #   print(temp_output + self.biases)
     if (self.activation == "relu"):
-      self.output = self.relu(temp_output + self.biases)
+      for node in range(self.n_node) :
+        self.output[node] = self.relu(temp_output[node] + self.biases[node])
     elif (self.activation == "sigmoid"):
-      self.output = self.sigmoid(temp_output + self.biases)
+      for node in range(self.n_node) :
+        self.output[node] = self.sigmoid(temp_output[node] + self.biases[node])
     return self.output

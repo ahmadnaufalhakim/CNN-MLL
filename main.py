@@ -31,9 +31,6 @@ def load_images_as_dataset(directory, image_size, batch_size, rescale=True) :
       list_labels.append(labels[i].numpy())
   return list_images, list_labels
 
-def predict_class(output) :
-  return 0 if output < 0.5 else 1
-
 if __name__ == "__main__":
   IMG_DIR_TEST = './data/test'
   IMAGE_SIZE = (150, 150)
@@ -72,14 +69,6 @@ if __name__ == "__main__":
   print('\n================')
   print('Predict')
   print('================')
-  for idx, img in enumerate(list_images) :
-    start1 = time.time()
-    raw_output = model1.forward(img)
-    finish1 = time.time()
-    print('Model 1 prediction:', predict_class(raw_output), end='\t| ')
-    print('Correct label:', list_labels[idx], end='\t| ')
-    print('Raw output:', raw_output)
-    print('Model 1 finished in:', finish1-start1, 'seconds', end='\n\n')
-    list_predicted.append(predict_class(raw_output))
+  list_predicted = model1.predict(list_images, list_labels, True)
 
-  print('Model 1 accuracy:', accuracy_score(list_labels, list_predicted))
+  print('Model accuracy:', accuracy_score(list_labels, list_predicted))
