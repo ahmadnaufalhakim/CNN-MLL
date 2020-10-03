@@ -4,37 +4,54 @@ import os
 import sys
 import time
 
-class SequentialModel:
-  """
-  Create a basic model instance
+from .layers.convolutional import Convolutional
+from .layers.dense import Dense
+from .layers.flatten import Flatten
+from .layers.pooling import Pooling
 
-  >>> layers
-  An array of layers
-  """
-  def __init__(self, layers: list):
+class SequentialModel:
+  def __init__(self,
+               layers: list = None):
+    """
+    Create a basic model instance
+
+    >>> layers
+    An array of layers
+    """
     self.layers = []
     self.output_shapes = []
-    self.weighted_layers = ['conv', 'dense']
 
-    for layer in layers:
-      self.add(layer)
+    if layers :
+      for layer in layers:
+        self.add(layer)
 
-  def add(self, layer):
+  def add(self,
+          layer,
+          initialize_weights: bool = True) :
     """
     Add layer to model
+
+    >>> layer
+    A layer instance (Convolutional, Dense, Flatten, or Pooling)
+
+    >>> initialize_weights
+    Boolean value to initialize weights randomly
+    `True` if you want to automatically initialize layer weights with random values
+    `False` if you want to set layer weights manually
     """
+    weighted_layers = ['conv', 'dense']
     if len(self.layers) :
-      if layer.name in self.weighted_layers:
+      if layer.name in weighted_layers and initialize_weights :
         layer.init_weights(self.output_shapes[-1])
       self.output_shapes.append(layer.output_shape(self.output_shapes[-1]))
     else :
-      if layer.name in self.weighted_layers:
+      if layer.name in weighted_layers and initialize_weights :
         layer.init_weights(layer.input_shape)
       self.output_shapes.append(layer.output_shape())
 
     self.layers.append(layer)
 
-  def forward(self, input: np.array):
+  def forward(self, input: np.array) :
     """
     Forward propagation
     """
@@ -101,9 +118,12 @@ class SequentialModel:
     return predicted_labels
 
   def save_model_as_json(self, filename: str) :
+    """
+    Save sequential model to external JSON file
+    """
     def default(object) :
       """
-      Convert Numpy array to list
+      Serializing Numpy array by converting it to a list
       """
       if isinstance(object, np.ndarray) :
         return object.tolist()
@@ -125,6 +145,7 @@ class SequentialModel:
       elif layer_data['name'] == 'dense' :
         layer_data['n_node'] = layer.n_node
         layer_data['activation'] = layer.activation
+        layer_data['input_shape'] = layer.input_shape
         layer_data['weights'] = layer.weights
         layer_data['biases'] = layer.biases
 
@@ -138,8 +159,41 @@ class SequentialModel:
     if not os.path.exists('../model') :
       os.mkdir('../model')
 
-    with open(os.path.join('../model/', filename), 'w') as output_file:
+    with open(os.path.join('../model/', filename), 'w') as output_file :
       json.dump(model, output_file, indent=4, default=default)
 
-  # def load_model_from_json(self) :
-  #   pass
+  def load_model_from_json(self, filename: str) :
+    """
+    Load sequential model from an external JSON file
+    """
+    self.layers = []
+    self.output_shapes = []
+
+    with open(os.path.join('../model/', filename), 'r') as input_file :
+      model = json.load(input_file)
+      for layer in model['layers'] :
+        new_layer = None
+        if layer['name'] == 'conv' :
+          new_layer = Convolutional(layer['n_filters'],
+                                    tuple(layer['filter_dim']),
+                                    tuple(layer['input_shape']) if layer['input_shape'] is not None else None,
+                                    layer['padding'],
+                                    layer['stride'])
+          new_layer.set_weights(np.array(layer['weights']))
+          new_layer.set_biases(np.array(layer['biases']))
+        elif layer['name'] == 'dense' :
+          new_layer = Dense(layer['n_node'],
+                            layer['activation'],
+                            tuple(layer['input_shape']) if layer['input_shape'] is not None else None)
+          new_layer.set_weights(np.array(layer['weights']))
+          new_layer.set_biases(np.array(layer['biases']))
+        elif layer['name'] == 'flatten' :
+          new_layer = Flatten()
+        elif layer['name'] == 'pool' :
+          new_layer = Pooling(layer['filter_dim'],
+                              layer['stride'],
+                              layer['mode'])
+        else :
+          raise Exception('Invalid layer type: ' + layer['name'])
+
+        self.add(new_layer, False)

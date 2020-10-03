@@ -27,11 +27,23 @@ class Dense(Layer) :
     self.n_node = n_node
     self.output = np.zeros(n_node)
 
-  def init_weights(self, input):
+  def init_weights(self, input) :
     if self.input_shape :
       self.weights = np.random.uniform(low=-.5, high=.5, size=(int(self.n_node), self.input_shape)).astype("float")
     else :
       self.weights = np.random.uniform(low=-.5, high=.5, size=(int(self.n_node), input[0])).astype("float")
+
+  def set_weights(self, weights: np.array) :
+    """
+    Set dense layer weights
+    """
+    self.weights = weights
+
+  def set_biases(self, biases: np.array) :
+    """
+    Set dense layer biases
+    """
+    self.biases = biases
 
   def output_shape(self,
                    input_shape: tuple = None) :

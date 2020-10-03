@@ -16,10 +16,10 @@ class Convolutional(Layer) :
     Number of filters
 
     >>> filter_dim
-    Dimension of filter matrix (row, col)
+    Dimension of filter matrix `(row, col)`
 
     >>> input_shape
-    Input shape (row, col, channel)
+    Input shape `(row, col, channel)`
 
     >>> padding
     Padding size
@@ -53,8 +53,24 @@ class Convolutional(Layer) :
                                     int(((input_shape[1] - self.filter_dim[0] + 2 * self.padding) / self.stride) + 1),
                                     int(((input_shape[2] - self.filter_dim[1] + 2 * self.padding) / self.stride) + 1)))
 
+  def set_weights(self, weights: np.array) :
+    """
+    Set convolutional layer weights
+    """
+    self.weights = weights
+
+  def set_biases(self, biases: np.array) :
+    """
+    Set convolutional layer biases
+    """
+    self.biases = biases
+
   def output_shape(self,
                    input_shape: tuple = None) :
+    if self.feature_maps is None :
+      self.feature_maps = np.zeros((self.n_filters,
+                                    int(((input_shape[1] - self.filter_dim[0] + 2 * self.padding) / self.stride) + 1),
+                                    int(((input_shape[2] - self.filter_dim[1] + 2 * self.padding) / self.stride) + 1)))
     return self.feature_maps.shape
 
   def resize(self, input) :
