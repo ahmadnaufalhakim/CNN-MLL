@@ -18,6 +18,9 @@ class SequentialModel:
       self.add(layer)
 
   def add(self, layer):
+    """
+    Add layer to model
+    """
     if len(self.layers) :
       if layer.name in self.weighted_layers:
         layer.init_weights(self.output_shapes[-1])
@@ -30,6 +33,9 @@ class SequentialModel:
     self.layers.append(layer)
 
   def forward(self, input: np.array):
+    """
+    Forward propagation
+    """
     output = input
     for layer in self.layers:
       output = layer.forward(output)
@@ -39,6 +45,10 @@ class SequentialModel:
               X: np.array,
               y: np.array = None,
               verbose: bool = False) -> list :
+    """
+    Predict class from an array of inputs.
+    Returns an array of predicted classes
+    """
     predicted_labels = []
     print('Found', len(X), 'data to be predicted', end='\n\n')
 
