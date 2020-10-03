@@ -32,7 +32,7 @@ def load_images_as_dataset(directory, image_size, batch_size, rescale=True) :
   return list_images, list_labels
 
 if __name__ == "__main__":
-  IMG_DIR_TEST = './data/test'
+  IMG_DIR_TEST = '../data/test'
   IMAGE_SIZE = (150, 150)
   BATCH_SIZE = 40
 
