@@ -39,6 +39,9 @@ class Pooling(Layer):
     return self.feature_maps.shape
 
   def backward(self, error) :
+    """
+    Pooling layer backward propagation
+    """
     output = np.zeros(self.input_shape)
     if self.mode == "max" :
       for depth in range(error.shape[0]) :
