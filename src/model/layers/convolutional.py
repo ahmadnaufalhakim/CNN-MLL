@@ -16,10 +16,10 @@ class Convolutional(Layer) :
     Number of filters
 
     >>> filter_dim
-    Dimension of filter matrix `(row, col)`
+    Dimension of filter matrix *(row, col)*
 
     >>> input_shape
-    Input shape `(row, col, channel)`
+    Input shape *(row, col, channel)*
 
     >>> padding
     Padding size
@@ -42,6 +42,8 @@ class Convolutional(Layer) :
     self.feature_maps = np.zeros((self.n_filters,
                                   int(((input_shape[0] - filter_dim[0] + 2 * self.padding) / self.stride) + 1),
                                   int(((input_shape[1] - filter_dim[1] + 2 * self.padding) / self.stride) + 1))) if input_shape is not None else None
+    self.delta_weights = None
+    self.delta_biases = None
 
   def init_weights(self, input_shape) :
     if self.input_depth :
@@ -133,26 +135,29 @@ class Convolutional(Layer) :
         input = res[:, input_top:input_bottom, input_left:input_right]
     return input
 
-  def pad(self, input) :
+  def pad(self,
+          input: np.array = None,
+          padding: int = None) :
     """
     Add zero-value padding around the input matrix based on the padding size
     """
-    left_input = top_input = self.padding
+    pad = padding if padding is not None else self.padding
+    left_input = top_input = pad
     right_input = bottom_input = padded_input_rows = padded_input_cols = depth = None
     if Image.isImageType(input) :
-      right_input, bottom_input = input.size[0] + self.padding, input.size[1] + self.padding
-      padded_input_rows, padded_input_cols = input.size[1] + 2 * self.padding, input.size[0] + 2 * self.padding
+      right_input, bottom_input = input.size[0] + pad, input.size[1] + pad
+      padded_input_rows, padded_input_cols = input.size[1] + 2 * pad, input.size[0] + 2 * pad
       depth = len(input.getbands())
       input = Image.fromarray(input)
     else :
-      if self.input_shape :
-        right_input, bottom_input = self.input_shape[1] + self.padding, self.input_shape[0] + self.padding
-        padded_input_rows, padded_input_cols = self.input_shape[0] + 2 * self.padding, self.input_shape[1] + 2 * self.padding
-        depth = self.input_depth
-      else :
-        right_input, bottom_input = input.shape[2] + self.padding, input.shape[1] + self.padding
-        padded_input_rows, padded_input_cols = input.shape[1] + 2 * self.padding, input.shape[2] + 2 * self.padding
+      if input is not None :
+        right_input, bottom_input = input.shape[2] + pad, input.shape[1] + pad
+        padded_input_rows, padded_input_cols = input.shape[1] + 2 * pad, input.shape[2] + 2 * pad
         depth = input.shape[0]
+      elif self.input_shape :
+        right_input, bottom_input = self.input_shape[1] + pad, self.input_shape[0] + pad
+        padded_input_rows, padded_input_cols = self.input_shape[0] + 2 * pad, self.input_shape[1] + 2 * pad
+        depth = self.input_depth
 
     result = np.zeros_like(input, shape=(depth, padded_input_rows, padded_input_cols))
     result[:, top_input:bottom_input, left_input:right_input] = input[:, :, :]
@@ -190,6 +195,85 @@ class Convolutional(Layer) :
           if self.feature_maps[feature_map_depth][feature_map_row][feature_map_col] < 0 :
             self.feature_maps[feature_map_depth][feature_map_row][feature_map_col] = 0
 
+  def backward(self, error, learning_rate, momentum) :
+    """
+    Convolutional layer backward propagation
+    """
+    delta_biases = np.array([[np.sum(sum)] for sum in error])
+    if self.delta_biases is not None :
+      self.delta_biases = learning_rate * delta_biases + momentum * self.delta_biases
+    else :
+      self.delta_biases = momentum * delta_biases
+
+    if self.delta_weights is not None :
+      self.delta_weights = learning_rate * self.derivative_weight(error) + momentum * self.delta_weights
+    else :
+      self.delta_weights = momentum * self.derivative_weight(error)
+    return self.derivative_input(error)
+
+  def derivative_weight(self, error) :
+    """
+    Compute derivative of convolutional layer's output with respect to its weights
+    """
+    def stride(error, strides) :
+      """
+      Add strides to error matrix
+      """
+      result = np.zeros((error.shape[0],
+                         error.shape[1] * strides - (strides - 1),
+                         error.shape[2] * strides - (strides - 1)))
+      for row in range(error.shape[1]) :
+        for col in range(error.shape[2]) :
+          result[:, row * strides, col * strides] = error[:, row, col]
+      return result
+
+    result = np.zeros((self.n_filters, self.filter_dim[0], self.filter_dim[1], self.input_depth))
+    err = stride(error, self.stride)
+    for err_depth in range(err.shape[0]) :
+      for result_row in range(result.shape[1]) :
+        for result_col in range(result.shape[2]) :
+          for result_depth in range(result.shape[3]) :
+            res = 0
+            for err_row in range(err.shape[1]) :
+              for err_col in range(err.shape[2]) :
+                res += self.input[result_depth][result_row + err_row][result_col + err_col] * err[err_depth][err_row][err_col]
+          result[err_depth][result_row][result_col][result_depth] = res
+    return result
+
+  def derivative_input(self, error = None) :
+    """
+    Compute derivative of convolutional layer's output with respect to its inputs
+    """
+    def flip(weights) :
+      """
+      Flip all indices of weights
+      """
+      result = np.zeros((self.n_filters, self.filter_dim[0], self.filter_dim[1], self.input_depth))
+      for filter in range(self.n_filters) :
+        for row in range(self.filter_dim[0]) :
+          for col in range(self.filter_dim[1]) :
+            for depth in range(self.input_depth) :
+              result[filter, - row - 1, - col - 1, depth] = weights[filter, row, col, depth]
+      return result
+
+    err = self.pad(error, 1)
+    flipped_weights = flip(self.weights)
+    result = np.zeros((self.input_depth,
+                       err.shape[1] - flipped_weights.shape[1] + 1,
+                       err.shape[2] - flipped_weights.shape[2] + 1))
+
+    for depth in range(result.shape[0]) :
+      for row in range(result.shape[1]) :
+        for col in range(result.shape[2]) :
+          res = 0
+          for filter in range(flipped_weights.shape[0]) :
+            for filter_row in range(flipped_weights.shape[1]) :
+              for filter_col in range(flipped_weights.shape[2]) :
+                res += err[filter][row + filter_row][col + filter_col] * flipped_weights[filter][filter_row][filter_col][depth]
+          result[depth][row][col] = res
+
+    return result
+
   def forward(self, input):
     """
     Convolution layer forward propagation
@@ -198,3 +282,11 @@ class Convolutional(Layer) :
     self.convolution()
     self.detector()
     return self.feature_maps
+
+  def update_weights(self) :
+    """
+    Update convolutional layer's biases and weights using negative gradient
+    """
+    self.biases -= self.delta_biases
+    self.weights -= self.delta_weights
+    self.delta_biases = self.delta_weights = None

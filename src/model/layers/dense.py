@@ -52,6 +52,7 @@ class Dense(Layer) :
 
   def output_shape(self,
                    input_shape: tuple = None) :
+    self.input_shape = input_shape[0]
     return self.output.shape
 
   def relu(self, input) :
@@ -73,7 +74,7 @@ class Dense(Layer) :
     Dense layer backward propagation
     """
     err = self.derivative_activation(error)
-    if self.delta_weights :
+    if self.delta_weights is not None :
       self.delta_weights = learning_rate * self.derivative_weight(err) + momentum * self.delta_weights
     else :
       self.delta_weights = momentum * self.derivative_weight(err)
