@@ -32,23 +32,23 @@ def load_images_as_dataset(directory, image_size, batch_size, rescale=True) :
   return list_images, list_labels
 
 if __name__ == "__main__" :
-  # IMG_DIR_TEST = '../data/test'
-  # IMAGE_SIZE = (150, 150)
-  # BATCH_SIZE = 40
+  IMG_DIR_TEST = '../data/test'
+  IMAGE_SIZE = (150, 150)
+  BATCH_SIZE = 40
 
-  # # Prepare dataset
-  # list_images, list_labels = load_images_as_dataset(IMG_DIR_TEST, IMAGE_SIZE, BATCH_SIZE)
+  # Prepare dataset
+  list_images, list_labels = load_images_as_dataset(IMG_DIR_TEST, IMAGE_SIZE, BATCH_SIZE)
 
-  # # Define models
-  # model1 = SequentialModel([
-  #   Convolutional(4, (3, 3), (150, 150, 3), 0, 1),
-  #   Pooling((2, 2), 2),
-  #   Convolutional(8, (3, 3)),
-  #   Pooling((2, 2), 2),
-  #   Flatten(),
-  #   Dense(256, 'relu'),
-  #   Dense(1, 'sigmoid')
-  # ])
+  # Define models
+  model1 = SequentialModel([
+    Convolutional(4, (3, 3), (150, 150, 3), 0, 1),
+    Pooling((2, 2), 2),
+    Convolutional(8, (3, 3)),
+    Pooling((2, 2), 2),
+    Flatten(),
+    Dense(256, 'relu'),
+    Dense(1, 'sigmoid')
+  ])
 
   # # model2 = SequentialModel([
   # #   Convolutional(16, (3, 3), (150, 150, 3)),
@@ -68,13 +68,16 @@ if __name__ == "__main__" :
   # # List of predicted labels by model
   # list_predicted = []
 
+  # model1.fit2(list_images[1:2], list_labels[1:2])
+  model1.fit(list_images[1:6], list_labels[1:6])
+
   # # Predict using defined models
-  # print('\n================')
-  # print('Predict')
-  # print('================')
-  # list_predicted = model1.predict(list_images[0:5], list_labels[0:5], True)
+  print('\n================')
+  print('Predict')
+  print('================')
+  # list_predicted = model1.predict(np.array(list_images[0:1]), np.array(list_labels[0:1]), True)
   # print(list_predicted.shape)
-  # print('Model accuracy:', accuracy_score(list_labels[0:5], list_predicted[0:5]))
+  # print('Model accuracy:', accuracy_score(list_labels[0:1], list_predicted[0:1]))
 
   # Save model
   # model1.save_model_as_json('testing.json')

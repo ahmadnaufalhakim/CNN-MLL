@@ -3,6 +3,7 @@ import numpy as np
 import os
 import sys
 import time
+import math
 
 from .layers.convolutional import Convolutional
 from .layers.dense import Dense
@@ -20,6 +21,7 @@ class SequentialModel:
     """
     self.layers = []
     self.output_shapes = []
+    self.errors = []
 
     if layers :
       for layer in layers:
@@ -59,6 +61,61 @@ class SequentialModel:
     for layer in self.layers:
       output = layer.forward(output)
     return output
+
+  def backward(self, outputs, targets, learning_rate=0.1, momentum=0.1):
+    for i in range(len(self.layers)-1, 0, -1):
+      if (self.layers[i].name == "dense"): #dihapus jika semua backward sudah diimplementasikan
+        if (self.layers[i].activation == "sigmoid"):  #dihapus jika semua backward sudah diimplementasikan
+          if (i == len(self.layers)-1):
+            error = self.calculate_error(np.array([outputs]), np.array([targets]))
+          error = self.layers[i].backward(error, learning_rate, momentum)
+
+  def update_weights(self):
+    for layer in self.layers:
+      if (layer.name == "dense"):
+        if (layer.activation == "sigmoid"):
+          layer.update_weights()
+
+  def make_batches(self, X, y, batch_size): 
+    mini_batch = math.ceil(len(X)/batch_size)
+    shuffled_idx = np.array(range(len(X)))
+    np.random.shuffle(shuffled_idx)
+    
+    X_batches = []
+    y_batches = []
+
+    print(shuffled_idx)
+    for batch in range(mini_batch):
+      i = 0
+      mini_X = []
+      mini_y = []
+      while ((batch * batch_size + i) < ((batch + 1) * batch_size)) and ((batch * batch_size + i) < len(shuffled_idx)):
+        mini_X.append(X[shuffled_idx[batch * batch_size + i]])
+        mini_y.append(y[shuffled_idx[batch * batch_size + i]])
+        i = i + 1
+      X_batches.append(mini_X)
+      y_batches.append(mini_y)
+
+    return np.array(X_batches), np.array(y_batches)       
+    
+  def calculate_error(self, output, target):
+    return (target - output) ** 2 / 2
+
+  def fit(self, X: np.array, y: np.array, learning_rate=0.1, momentum=0.1, batch_size=2):
+    mini_batch = math.ceil(len(X)/batch_size)
+
+    X_batches, y_batches = self.make_batches(X, y, batch_size)
+    print("fitting...")
+    for idx_batch, (X_batch, y_batch) in enumerate(zip(X_batches, y_batches)):
+      print("batch #" + str(idx_batch + 1))
+      # print(y_batch)
+      for idx, (input_data, target_label) in enumerate(zip(X_batch, y_batch)) :
+        # print(target_label)
+        print("Forward passing data #" + str((idx + 1) + (idx_batch * batch_size)) + "...")
+        output = self.forward(input_data)
+        print("Backward passing data #" + str((idx + 1) + (idx_batch * batch_size)) + "...")
+        self.backward(output, target_label, learning_rate, momentum)
+      self.update_weights()
 
   def predict(self,
               X: np.array,
