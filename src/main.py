@@ -142,6 +142,29 @@ if __name__ == "__main__" :
   # err = np.array([n for n in range(1,19)])
   # print(flat.backward(err))
 
+  # TESTING POOLING BACKWARD
+  pool = Pooling((2, 2), 1, "avg")
+  pool.output_shape((2,4,4))
+  input = np.array([[[1, 70, 3, 4],
+                     [70, 2, 5, 69],
+                     [7, 8, 10, 11],
+                     [9, 23, 12, 100]],
+                     
+                    [[1,2,3,4],
+                     [2,3,4,1],
+                     [3,4,1,2],
+                     [4,1,2,3]]])
+  print(input.shape)
+  print(pool.forward(input))
+  err = np.array([[[.1, .2, .3],
+                   [.4, .5, .6],
+                   [.7, .8, .9]],
+                   
+                  [[11, 22, 33],
+                   [44, 55, 66],
+                   [77, 88, 99]]])
+  print(pool.backward(err))
+
   # print(w.shape)
   # print(w.transpose())
   # print(np.zeros(5).transpose().shape)
