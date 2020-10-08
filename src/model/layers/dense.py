@@ -52,7 +52,7 @@ class Dense(Layer) :
 
   def output_shape(self,
                    input_shape: tuple = None) :
-    self.input_shape = input_shape[0]
+    self.input_shape = input_shape
     return self.output.shape
 
   def relu(self, input) :
@@ -115,10 +115,10 @@ class Dense(Layer) :
     """
     Compute derivative of dense layer's output with respect to its weights
     """
-    input = np.zeros(self.input_shape + 1)
+    input = np.zeros(self.input_shape[0] + 1)
     input[0] = 1
     input[1:] = self.input
-    return np.dot(error, input.reshape(1, self.input_shape + 1))
+    return np.dot(error, input.reshape(1, self.input_shape[0] + 1))
 
   def forward(self, input) :
     """
@@ -140,6 +140,11 @@ class Dense(Layer) :
     """
     Update dense layer's biases and weights using negative gradient
     """
+    print("before update:")
+    print(self.weights[0][:5])
+    # print(self.delta_weights)
     self.biases -= self.delta_weights[:, 0]
     self.weights -= self.delta_weights[:, 1:]
+    print("after update:")
+    print(self.weights[0][:5])
     self.delta_weights = None
