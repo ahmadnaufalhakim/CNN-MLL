@@ -35,7 +35,7 @@ if __name__ == "__main__" :
   IMG_DIR_TEST = '../data/test'
   IMG_DIR_TRAINING = '../data/train'
   IMAGE_SIZE = (150, 150)
-  BATCH_SIZE = 20
+  BATCH_SIZE = 15
 
   # Prepare dataset
   list_test_images, list_test_labels = load_images_as_dataset(IMG_DIR_TEST, IMAGE_SIZE, BATCH_SIZE)
@@ -71,7 +71,7 @@ if __name__ == "__main__" :
   list_predicted = []
 
   # model1.fit2(list_images[1:2], list_labels[1:2])
-  model1.fit(list_train_images, list_train_labels, batch_size=BATCH_SIZE)
+  model1.fit(list_train_images, list_train_labels, batch_size=5)
 
   # # Predict using defined models
   print('\n================')
