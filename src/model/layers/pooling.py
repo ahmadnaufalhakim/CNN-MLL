@@ -38,7 +38,7 @@ class Pooling(Layer):
                                   int(((input_shape[2] - self.filter_dim[1]) / self.stride) + 1)))
     return self.feature_maps.shape
 
-  def backward(self, error) :
+  def backward(self, error, learning_rate = None, momentum = None) :
     """
     Pooling layer backward propagation
     """

@@ -58,33 +58,44 @@ class SequentialModel:
     Forward propagation
     """
     output = input
-    for layer in self.layers:
+    for layer in self.layers :
       output = layer.forward(output)
     return output
 
-  def backward(self, outputs, targets, learning_rate=0.1, momentum=0.1):
-    for i in range(len(self.layers)-1, 0, -1):
-      if (self.layers[i].name == "dense"): #dihapus jika semua backward sudah diimplementasikan
-        if (self.layers[i].activation == "sigmoid"):  #dihapus jika semua backward sudah diimplementasikan
-          if (i == len(self.layers)-1):
-            error = self.calculate_error(np.array([outputs]), np.array([targets]))
-          error = self.layers[i].backward(error, learning_rate, momentum)
+  def backward(self, outputs, targets, learning_rate=0.1, momentum=0.1) :
+    """
+    Backward propagation
+    """
+    error = None
+    for i in range(len(self.layers)-1, 0, -1) :
+      if (i == len(self.layers)-1) :
+        error = self.calculate_error(np.array([outputs]), np.array([targets]))
+      error = self.layers[i].backward(error, learning_rate, momentum)
 
-  def update_weights(self):
-    for layer in self.layers:
-      if (layer.name == "dense"):
-        if (layer.activation == "sigmoid"):
-          layer.update_weights()
+  def update_weights(self) :
+    """
+    Update all layers' weights
+    """
+    for layer in self.layers :
+      try:
+        layer.update_weights()
+      except Exception as e :
+        pass
 
-  def make_batches(self, X, y, batch_size): 
+  def make_batches(self,
+                   X: np.array,
+                   y: np.array,
+                   batch_size: int) :
+    """
+    Make batches of data based on batch size
+    """
     mini_batch = math.ceil(len(X)/batch_size)
     shuffled_idx = np.array(range(len(X)))
     np.random.shuffle(shuffled_idx)
-    
+
     X_batches = []
     y_batches = []
 
-    print(shuffled_idx)
     for batch in range(mini_batch):
       i = 0
       mini_X = []
@@ -97,24 +108,45 @@ class SequentialModel:
       y_batches.append(mini_y)
 
     return np.array(X_batches), np.array(y_batches)       
-    
-  def calculate_error(self, output, target):
+
+  def calculate_error(self,
+                      output: int,
+                      target: int) :
+    """
+    Calculate error of output
+    """
     return (target - output) ** 2 / 2
 
-  def fit(self, X: np.array, y: np.array, learning_rate=0.1, momentum=0.1, batch_size=2, epochs=2):
-    mini_batch = math.ceil(len(X)/batch_size)
-
+  def fit(self,
+          X: np.array,
+          y: np.array,
+          learning_rate: float = 0.1,
+          momentum: float = 0.1,
+          batch_size: int = 2,
+          epochs: int = 2) :
+    """
+    Fitting training data to model
+    """
     X_batches, y_batches = self.make_batches(X, y, batch_size)
-    print("fitting...")
+    print("Fitting ...")
     for epoch in range(epochs):
-      print("\nepoch #" + str(epoch + 1) + "\n")
+      print("\n-- Epoch #{}".format(epoch + 1))
       for idx_batch, (X_batch, y_batch) in enumerate(zip(X_batches, y_batches)):
-        print("batch #" + str(idx_batch + 1))
+        print("---- Batch #{}".format(idx_batch + 1))
         for idx, (input_data, target_label) in enumerate(zip(X_batch, y_batch)) :
-          print("Forward passing data #" + str((idx + 1) + (idx_batch * batch_size)) + "...")
+          print("------ Forward passing data #{} ...\t".format((idx + 1) + (idx_batch * batch_size)), end='')
+          sys.stdout.flush()
+          forward_start = time.time()
           output = self.forward(input_data)
-          print("Backward passing data #" + str((idx + 1) + (idx_batch * batch_size)) + "...")
+          forward_finish = time.time()
+          print("| {} s".format(forward_finish - forward_start))
+          
+          print("------ Backward passing data #{} ...\t".format((idx + 1) + (idx_batch * batch_size)), end='')
+          sys.stdout.flush()
+          backward_start = time.time()
           self.backward(output, target_label, learning_rate, momentum)
+          backward_finish = time.time()
+          print("| {} s".format(backward_finish - backward_start))
         self.update_weights()
 
   def predict(self,
@@ -141,7 +173,7 @@ class SequentialModel:
           predicted_labels.append(label)
           if verbose :
             print('\nModel prediction:', label, end='\t| ')
-            if y :
+            if y is not None :
               print('Correct label:', y[idx], end='\t| ')
             print('Raw output:', output)
             print('Model finished in:', finish-start, 'seconds', end='\n\n')
@@ -159,7 +191,7 @@ class SequentialModel:
           predicted_labels.append(label)
           if verbose :
             print('Model prediction:', label, end='\t| ')
-            if y :
+            if y is not None :
               print('Correct label:', y[idx], end='\t| ')
             print('Raw output:', output)
             print('Model finished in:', finish-start, 'seconds', end='\n\n')

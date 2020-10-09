@@ -19,7 +19,7 @@ class Flatten(Layer) :
     self.output = np.zeros(np.prod(input_shape))
     return self.output.shape
 
-  def backward(self, error) :
+  def backward(self, error, learning_rate = None, momentum = None) :
     """
     Flatten layer backward propagation
     """
