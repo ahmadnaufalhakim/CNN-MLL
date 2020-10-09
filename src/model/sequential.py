@@ -101,21 +101,21 @@ class SequentialModel:
   def calculate_error(self, output, target):
     return (target - output) ** 2 / 2
 
-  def fit(self, X: np.array, y: np.array, learning_rate=0.1, momentum=0.1, batch_size=2):
+  def fit(self, X: np.array, y: np.array, learning_rate=0.1, momentum=0.1, batch_size=2, epochs=2):
     mini_batch = math.ceil(len(X)/batch_size)
 
     X_batches, y_batches = self.make_batches(X, y, batch_size)
     print("fitting...")
-    for idx_batch, (X_batch, y_batch) in enumerate(zip(X_batches, y_batches)):
-      print("batch #" + str(idx_batch + 1))
-      # print(y_batch)
-      for idx, (input_data, target_label) in enumerate(zip(X_batch, y_batch)) :
-        # print(target_label)
-        print("Forward passing data #" + str((idx + 1) + (idx_batch * batch_size)) + "...")
-        output = self.forward(input_data)
-        print("Backward passing data #" + str((idx + 1) + (idx_batch * batch_size)) + "...")
-        self.backward(output, target_label, learning_rate, momentum)
-      self.update_weights()
+    for epoch in range(epochs):
+      print("\nepoch #" + str(epoch + 1) + "\n")
+      for idx_batch, (X_batch, y_batch) in enumerate(zip(X_batches, y_batches)):
+        print("batch #" + str(idx_batch + 1))
+        for idx, (input_data, target_label) in enumerate(zip(X_batch, y_batch)) :
+          print("Forward passing data #" + str((idx + 1) + (idx_batch * batch_size)) + "...")
+          output = self.forward(input_data)
+          print("Backward passing data #" + str((idx + 1) + (idx_batch * batch_size)) + "...")
+          self.backward(output, target_label, learning_rate, momentum)
+        self.update_weights()
 
   def predict(self,
               X: np.array,
